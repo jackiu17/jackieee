@@ -439,7 +439,64 @@ body {
     <div class="timeline" id="timelineContainer"></div>
 
     <script>
-     console.log
+     console.log  // 1. Structured Timeline Data Object Array
+        const timelineData = [
+            { date: "2018", text: "An accidental chance, I joined the extracurricular class of softball in my primary school. I even do not know what is this, and I only join it as fun." },
+            { date: "2019", text: "My first time to represent Hong Kong, formed from mine and other school team. It was U12 Asian Pacicfic Cup in Jakarta." },
+            { date: "2020", text: "I officially became a player of Hong Kong Youth Team. Me and some of my school teammates were recommand to HK team by our coach. I joined the U12 HK softball team in 2020." },
+            { date: "2023", text: "I had my most memorable competition. It was U15 Women Softball Asia Cup in TaiWan. I saw many strong team such as Japan, Korea and Philippines. We got 5th and I gained a lot of experience." }
+        ];
+
+        // 2. Reference targeted HTML container
+        const container = document.getElementById('timelineContainer');
+
+        // 3. Dynamic Rendering Pipeline Loop
+        timelineData.forEach((item, index) => {
+            // Instantiate wrapper
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('timeline-item');
+            
+            // Alternate classes horizontally based on entry index
+            if (index % 2 === 0) {
+                itemDiv.classList.add('left');
+            } else {
+                itemDiv.classList.add('right');
+            }
+
+            // Create structural visual components
+            const dot = document.createElement('div');
+            dot.classList.add('timeline-dot');
+
+            const content = document.createElement('div');
+            content.classList.add('content');
+
+            // Inject data fields safely via textContent API
+            const header = document.createElement('h2');
+            header.textContent = item.date;
+
+            const bodyText = document.createElement('p');
+            bodyText.textContent = item.text;
+
+            // Assemble DOM component fragments tree
+            content.appendChild(header);
+            content.appendChild(bodyText);
+            itemDiv.appendChild(dot);
+            itemDiv.appendChild(content);
+            
+            // Append finished component into host viewport
+            container.appendChild(itemDiv);
+
+            // 4. Client-side Interaction Event Handlers
+            content.addEventListener('click', () => {
+                // Clear any pre-existing highlighted item states
+                document.querySelectorAll('.timeline-item, .content').forEach(el => {
+                    el.classList.remove('active');
+                });
+                // Target current component elements to activate highlights
+                itemDiv.classList.add('active');
+                content.classList.add('active');
+            });
+        });
     </script>
 
 

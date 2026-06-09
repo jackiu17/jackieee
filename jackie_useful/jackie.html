@@ -5,6 +5,31 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>jackie's personal</title>
      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      <script type="text/javascript">
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Task', 'Hours per Day'],
+          ['School',        7],
+          ['Revision',      2],
+          ['Exercise',      2],
+          ['Games',         1.5],
+          ['Eat',           2],
+          ['Entertainment', 2],
+          ['Sleep',         8]
+        ]);
+
+        var options = {
+          title: 'Jackies Daily Routine:',
+          pieHole: 0.4,
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+        chart.draw(data, options);
+      }
+    </script>
+    
 </head>
 <link rel="icon" type="jpg" href="lck/snoopy favicon.jpg">
 
@@ -499,30 +524,6 @@ body {
         });
     </script>
 
-     <script type="text/javascript">
-      google.charts.load("current", {packages:["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-          ['Task', 'Hours per Day'],
-          ['School',        7],
-          ['Revision',      2],
-          ['Exercise',      2],
-          ['Games',         1.5],
-          ['Eat',           2],
-          ['Entertainment', 2],
-          ['Sleep',         8]
-        ]);
-
-        var options = {
-          title: 'Jackies Daily Routine:',
-          pieHole: 0.4,
-        };
-
-        var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
-        chart.draw(data, options);
-      }
-    </script>
 
     
 </body>

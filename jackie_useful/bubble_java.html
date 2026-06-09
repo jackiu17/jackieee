@@ -3,71 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JavaScript Bubble Chart Example</title>
-    <!-- Step 1: Import Chart.js library via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Clustered Bubble Chart Example</title>
     <style>
-        .chart-container {
-            width: 80%;
-            max-width: 600px;
-            margin: auto;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        #container {
+            width: 100%;
+            max-width: 900px;
+            height: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
     </style>
+    <!-- Core Highcharts library -->
+    <script src="https://highcharts.com"></script>
+    <!-- Highcharts More module (required for bubble charts) -->
+    <script src="https://highcharts.com"></script>
+    <!-- Accessibility module (required for charts to function properly) -->
+    <script src="https://highcharts.com"></script>
 </head>
 <body>
 
-    <div class="chart-container">
-        <!-- Step 2: Add a canvas element to render the chart -->
-        <canvas id="myBubbleChart"></canvas>
-    </div>
+    <div id="container"></div>
 
     <script>
-        // Step 3: Get the execution context of the canvas element
-        const ctx = document.getElementById('myBubbleChart').getContext('2d');
-
-        // Step 4: Define your 3D dataset (x, y, r)
-        const data = {
-            datasets: [{
-                label: 'Product Performance Dataset',
-                data: [
-                    { x: 10, y: 20, r: 15 }, // x-axis, y-axis, bubble radius in pixels
-                    { x: 15, y: 10, r: 10 },
-                    { x: 25, y: 30, r: 25 },
-                    { x: 30, y: 15, r: 12 },
-                    { x: 40, y: 25, r: 20 }
-                ],
-                backgroundColor: 'rgba(54, 162, 235, 0.5)', // Translucent fill
-                borderColor: 'rgba(54, 162, 235, 1)',       // Solid border
-                borderWidth: 1
-            }]
-        };
-
-        // Step 5: Configure options and scale axes titles
-        const config = {
-            type: 'bubble', // Tells Chart.js to render a bubble chart
-            data: data,
-            options: {
-                responsive: true,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Investment Costs (X)'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Revenue Generated (Y)'
+        document.addEventListener('DOMContentLoaded', () => {
+            Highcharts.chart('container', {
+                chart: {
+                    type: 'packedbubble', // Sets the layout to a packed/clustered physics structure
+                    height: '100%'
+                },
+                title: {
+                    text: 'Market Share Breakdown by Industry',
+                    align: 'left'
+                },
+                tooltip: {
+                    useHTML: true,
+                    pointFormat: '<b>{point.name}:</b> {point.value} million units'
+                },
+                plotOptions: {
+                    packedbubble: {
+                        minSize: '30%',
+                        maxSize: '120%',
+                        zMin: 0,
+                        zMax: 1000,
+                        layoutAlgorithm: {
+                            splitSeries: true, // Forces bubbles to group/cluster by their parent series
+                            gravitationalConstant: 0.02,
+                            seriesInteraction: true,
+                            dragBetweenSeries: true, // Allows you to drag bubbles between clusters dynamically
+                            parentNodeLimit: true
+                        },
+                        dataLabels: {
+                            enabled: true,
+                            format: '{point.name}',
+                            style: {
+                                color: 'black',
+                                textOutline: 'none',
+                                fontWeight: 'normal'
+                            }
                         }
                     }
-                }
-            }
-        };
-
-        // Step 6: Initialize and draw the chart
-        const myBubbleChart = new Chart(ctx, config);
+                },
+                // Define your clusters as series, and data elements as bubbles inside them
+                series: [{
+                    name: 'Technology',
+                    data: [
+                        { name: 'Apple', value: 800 },
+                        { name: 'Google', value: 650 },
+                        { name: 'Microsoft', value: 500 },
+                        { name: 'Meta', value: 300 },
+                        { name: 'Nvidia', value: 250 }
+                    ]
+                }, {
+                    name: 'Automotive',
+                    data: [
+                        { name: 'Tesla', value: 450 },
+                        { name: 'Toyota', value: 400 },
+                        { name: 'Ford', value: 200 },
+                        { name: 'BMW', value: 150 }
+                    ]
+                }, {
+                    name: 'Finance',
+                    data: [
+                        { name: 'Visa', value: 380 },
+                        { name: 'JPMorgan', value: 340 },
+                        { name: 'Mastercard', value: 290 },
+                        { name: 'Citi', value: 120 }
+                    ]
+                }]
+            });
+        });
     </script>
-
 </body>
 </html>

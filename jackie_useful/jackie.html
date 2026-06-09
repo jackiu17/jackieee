@@ -67,6 +67,14 @@ body {
         display: block;
     }
 
+        .colored-br {
+    display: block;        /* Forces content to the next line */
+    width: 100%;           /* Spans across the full container width */
+    height: 3px;           /* Controls the thickness of the line */
+    background-color: #ff5733; /* The color of your line break */
+    margin: 10px 0;        /* Space above and below the line */
+    }
+
 /* AI */
     .car {
         height: 30%;
@@ -366,6 +374,12 @@ body {
         </header>
     </div>
 
+    <p>
+  
+  <!-- This acts exactly like a colored line break -->
+  <span class="colored-br"></span>
+  
+</p>
 <!-- AI Photo -->
     <div>
         <img class="car" src="lck/cartoon girl.png" alt="jackie">

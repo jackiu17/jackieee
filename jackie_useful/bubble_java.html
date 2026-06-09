@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Bubble Chart Example</title>
+    <!-- Step 1: Import Chart.js library via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            width: 80%;
+            max-width: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chart-container">
+        <!-- Step 2: Add a canvas element to render the chart -->
+        <canvas id="myBubbleChart"></canvas>
+    </div>
+
+    <script>
+        // Step 3: Get the execution context of the canvas element
+        const ctx = document.getElementById('myBubbleChart').getContext('2d');
+
+        // Step 4: Define your 3D dataset (x, y, r)
+        const data = {
+            datasets: [{
+                label: 'Product Performance Dataset',
+                data: [
+                    { x: 10, y: 20, r: 15 }, // x-axis, y-axis, bubble radius in pixels
+                    { x: 15, y: 10, r: 10 },
+                    { x: 25, y: 30, r: 25 },
+                    { x: 30, y: 15, r: 12 },
+                    { x: 40, y: 25, r: 20 }
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 0.5)', // Translucent fill
+                borderColor: 'rgba(54, 162, 235, 1)',       // Solid border
+                borderWidth: 1
+            }]
+        };
+
+        // Step 5: Configure options and scale axes titles
+        const config = {
+            type: 'bubble', // Tells Chart.js to render a bubble chart
+            data: data,
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Investment Costs (X)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Revenue Generated (Y)'
+                        }
+                    }
+                }
+            }
+        };
+
+        // Step 6: Initialize and draw the chart
+        const myBubbleChart = new Chart(ctx, config);
+    </script>
+
+</body>
+</html>

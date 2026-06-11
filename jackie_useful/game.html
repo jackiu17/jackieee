@@ -3,20 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO SIMULATOR: Living Stadium & AI Teammates</title>
+    <title>PRO SIMULATOR: Full Diamond Base Plates & 9-Position Defense</title>
     <style>
         :root {
-            --hud-dark: rgba(10, 14, 22, 0.94);
+            --hud-dark: rgba(11, 15, 23, 0.96);
             --gold: #f1c40f;
             --neon-green: #2ecc71;
             --neon-red: #e74c3c;
-            --blue-team: #3498db;
+            --blue-team: #2575fc;
+            --clay-color: #ba6338;
+            --turf-dark: #194a25;
+            --turf-light: #226332;
+            --jersey-white: #f8f9fa;
+            --skin-tone: #e0ac69;
+            --base-white: #ffffff;
         }
 
         body, html {
             margin: 0; padding: 0;
             width: 100%; height: 100%;
-            background-color: #030406;
+            background-color: #020305;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             overflow: hidden;
             color: #e2e8f0;
@@ -24,7 +30,7 @@
         }
 
         /* ==========================================================================
-           3D THEATER VIEWPORT CANVAS
+           3D CAMERA VIEWPORT
            ========================================================================== */
         .viewport-container {
             position: relative;
@@ -33,112 +39,228 @@
             perspective: 1000px;
         }
 
-        /* 3D Dynamic Environment Wrapper Floor */
         .stadium-world-3d {
             width: 100%; height: 100%;
             position: absolute;
-            background: linear-gradient(to bottom, #0b111e 0%, #151f38 35%, #2c2245 55%, #1b4d24 75%, #143d1c 100%);
+            background: 
+                radial-gradient(circle at 50% 45%, rgba(220, 118, 51, 0.25) 0%, transparent 60%),
+                linear-gradient(to bottom, #050b14 0%, #0d192d 32%, #211c38 48%, #4a2840 58%, #873634 65%, #222 66%);
             transform-style: preserve-3d;
             transition: transform 0.05s ease-out;
         }
 
-        /* Procedural Outfield Fences and Jumbotrons */
+        /* Crowd Stands */
         .stadium-world-3d::before {
             content: ''; position: absolute;
-            top: 40%; left: 0; width: 100%; height: 25%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 70%, #0d2b13 70%, #06170a 100%),
-                        repeating-linear-gradient(90deg, #111 0px, #111 3px, #222 3px, #222 6px);
-            background-blend-mode: multiply;
-            border-bottom: 5px solid var(--gold);
+            top: 36%; left: -10%; width: 120%; height: 30%;
+            background: 
+                linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 15%, rgba(0,0,0,0.8) 75%, #0f2d16 75%, #081a0d 100%),
+                repeating-linear-gradient(180deg, #1b1e22 0px, #1b1e22 2px, #0e1013 2px, #0e1013 8px),
+                repeating-linear-gradient(90deg, #ff5733 0px, #ff5733 3px, #33ff57 3px, #33ff57 6px, #3357ff 6px, #3357ff 9px);
+            background-blend-mode: normal, overlay, multiply;
+            border-bottom: 4px solid #111;
+            box-shadow: inset 0 -30px 40px rgba(0,0,0,0.9);
+            transform: rotateX(2deg);
         }
 
         .stadium-lights {
-            position: absolute; top: 12%; width: 100%; display: flex;
-            justify-content: space-between; padding: 0 15%; box-sizing: border-box;
+            position: absolute; top: 10%; width: 100%; display: flex;
+            justify-content: space-between; padding: 0 10%; box-sizing: border-box;
             pointer-events: none; z-index: 2;
         }
         .light-bank {
-            width: 140px; height: 30px; background: #fff; border-radius: 2px;
-            box-shadow: 0 0 70px 20px #fff, 0 0 20px #fff; opacity: 0.95;
+            width: 180px; height: 35px; background: #ffffff; border-radius: 4px;
+            box-shadow: 0 0 10px #fff, 0 0 40px 10px rgba(255,255,255,0.7), 0 0 120px 30px rgba(255,255,255,0.4);
+            opacity: 0.98;
         }
 
+        /* Jumbotron Scoreboard */
+        .jumbotron-scoreboard {
+            position: absolute;
+            top: 15%; left: 50%;
+            transform: translateX(-50%) translateZ(-100px);
+            width: 480px; height: 130px;
+            background: #090d16;
+            border: 4px solid #222e45;
+            border-radius: 6px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.9);
+            z-index: 2;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .jumbotron-header {
+            display: flex; justify-content: space-between;
+            border-bottom: 2px solid #1f2c42; padding-bottom: 4px;
+            font-size: 0.75rem; color: #5f7499; font-weight: bold; text-transform: uppercase;
+        }
+        .matrix-table {
+            width: 100%; margin-top: 8px; border-collapse: collapse; text-align: center;
+        }
+        .matrix-table th { font-size: 0.7rem; color: #8ba2cc; padding: 2px; font-weight: normal; }
+        .matrix-table td { font-size: 1.1rem; font-weight: bold; color: var(--gold); padding: 4px 2px; }
+        .matrix-table .team-row { color: #fff; text-align: left; font-size: 0.85rem; font-family: sans-serif; font-weight: bold;}
+        .matrix-table .highlight-col { color: #fff; background: rgba(255,255,255,0.04); width: 35px; }
+
+        /* Turf & Ground Line Mesh */
         .field-surface-mesh {
             position: absolute; bottom: 0; left: 50%;
-            width: 350vw; height: 140vh;
-            background: #1e6031;
+            width: 400vw; height: 145vh;
+            background: var(--turf-dark);
             background-image: 
-                radial-gradient(circle at 50% 100%, #a0522d 0%, #b86530 25%, transparent 25.5%),
-                repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 60px, transparent 60px, transparent 120px);
-            transform: translateX(-50%) rotateX(76deg);
+                radial-gradient(circle at 50% 100%, transparent 14.8%, rgba(0,0,0,0.3) 14.9%, var(--clay-color) 15%, var(--clay-color) 25%, rgba(0,0,0,0.4) 25.1%, transparent 25.3%),
+                radial-gradient(circle at 50% 100%, var(--clay-color) 0%, var(--clay-color) 4.8%, #fff 4.9%, #fff 5.1%, transparent 5.2%),
+                repeating-linear-gradient(90deg, var(--turf-dark) 0px, var(--turf-dark) 70px, var(--turf-light) 70px, var(--turf-light) 140px);
+            background-blend-mode: normal, normal, soft-light;
+            transform: translateX(-50%) rotateX(78deg);
             transform-origin: bottom center;
-            box-shadow: inset 0 60px 120px rgba(0,0,0,0.7);
+            box-shadow: inset 0 100px 200px rgba(0,0,0,0.8);
             z-index: 1;
         }
 
         /* ==========================================================================
-           LIVING STADIUM NPC ENGINE ENTITIES
+           PHYSICAL REALISTIC BASE PLATES (3D PERSPECTIVE GROUND ALIGNMENT)
            ========================================================================== */
-        .stadium-npc {
+        .base-plate-3d {
             position: absolute;
+            width: 18px; height: 18px;
+            background: var(--base-white);
+            z-index: 2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(0,0,0,0.2);
+            transform-style: preserve-3d;
+        }
+        
+        /* Diamond Square Bags */
+        .square-bag {
+            transform: translate(-50%, -50%) rotateX(20deg) rotateY(0deg) rotateZ(45deg);
+        }
+
+        /* Home Plate Shape Modification (Pentagon Pointing to Catcher) */
+        #plate-home {
+            top: 82%; left: 50%;
+            width: 20px; height: 20px;
+            background: var(--base-white);
+            transform: translate(-50%, -50%) rotateX(25deg);
+            clip-path: polygon(50% 100%, 100% 50%, 100% 0%, 0% 0%, 0% 50%);
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.6);
+        }
+        #plate-first  { top: 54%; left: 69%; }
+        #plate-second { top: 43.5%; left: 50%; }
+        #plate-third  { top: 54%; left: 31%; }
+
+        /* ==========================================================================
+           PROCEDURAL 3D SKELETAL HUMAN MODELS (NPCs)
+           ========================================================================== */
+        .npc-container-3d {
+            position: absolute;
+            width: 50px; height: 110px;
+            transform-style: preserve-3d;
             transform: translate(-50%, -50%);
-            font-size: 3.5rem; text-align: center;
-            z-index: 5; filter: drop-shadow(0 8px 6px rgba(0,0,0,0.4));
-            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 5;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* NPC Label Badges */
+        .human-mesh-root {
+            position: relative; width: 100%; height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .human-head-node {
+            position: absolute; top: 0; left: 15px; width: 18px; height: 18px;
+            background: var(--skin-tone); border-radius: 50%;
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3);
+        }
+        .human-head-node::before {
+            content: ''; position: absolute; top: -3px; left: -2px; width: 22px; height: 10px;
+            border-radius: 10px 12px 0 0; z-index: 6;
+        }
+        .red-team-npc .human-head-node::before { background: var(--neon-red); }
+        .blue-team-npc .human-head-node::before { background: var(--blue-team); }
+
+        .human-torso-node {
+            position: absolute; top: 20px; left: 11px; width: 26px; height: 40px;
+            border-radius: 4px; box-shadow: inset -3px -3px 6px rgba(0,0,0,0.2);
+        }
+        .red-team-npc .human-torso-node { background: var(--jersey-white); border-top: 5px solid var(--neon-red); }
+        .blue-team-npc .human-torso-node { background: var(--jersey-white); border-top: 5px solid var(--blue-team); }
+
+        .human-arm {
+            position: absolute; top: 22px; width: 7px; height: 32px;
+            background: var(--jersey-white); border-bottom: 6px solid var(--skin-tone);
+            border-radius: 3px; transform-origin: top center;
+        }
+        .human-arm.left { left: 2px; transform: rotate(10deg); }
+        .human-arm.right { right: 2px; transform: rotate(-10deg); }
+
+        .human-leg {
+            position: absolute; top: 62px; width: 9px; height: 40px;
+            background: var(--jersey-white); border-bottom: 10px solid #111;
+            transform-origin: top center;
+        }
+        .human-leg.left { left: 10px; }
+        .human-leg.right { right: 10px; }
+
         .npc-badge {
-            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.85); color: #fff; padding: 2px 8px;
-            border-radius: 4px; font-size: 0.65rem; font-weight: bold; white-space: nowrap;
-            letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.2);
+            position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+            background: var(--hud-dark); color: #fff; padding: 2px 7px;
+            border-radius: 4px; font-size: 0.58rem; font-weight: 800; white-space: nowrap;
+            letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.12);
         }
-        .blue-team-badge { border-color: var(--blue-team); color: #9cd4ff; }
-        .red-team-badge { border-color: var(--neon-red); color: #ff9c9c; }
+        .blue-team-badge { border-color: var(--blue-team); color: #a6d5ff; }
+        .red-team-badge { border-color: var(--neon-red); color: #ffa3a3; }
 
-        /* Specific NPC starting points layout anchors */
-        #npc-pitcher { top: 49%; left: 50%; font-size: 4.5rem; cursor: pointer; }
-        #npc-teammate-b1 { top: 54%; left: 68%; } /* Standing ready on First Base */
-        #npc-fielder-b2 { top: 46%; left: 58%; }  /* Second Base Opponent */
-        #npc-fielder-b3 { top: 47%; left: 40%; }  /* Third Base Opponent */
+        /* ==========================================================================
+           FIELD ROSTER POSITIONING
+           ========================================================================== */
+        #npc-pitcher        { top: 46%; left: 50%; transform: translate(-50%, -50%) scale(1.1); }
+        #npc-catcher        { top: 88%; left: 50%; transform: translate(-50%, -50%) scale(1.5); }
+        #npc-first-base     { top: 52%; left: 73%; } /* Positioned slightly off bags to defend */
+        #npc-second-base    { top: 40%; left: 56%; }
+        #npc-third-base     { top: 52%; left: 27%; }
+        #npc-shortstop      { top: 40%; left: 44%; }
+        #npc-left-field     { top: 38%; left: 20%; transform: translate(-50%, -50%) scale(0.85); }
+        #npc-center-field   { top: 37%; left: 50%; transform: translate(-50%, -50%) scale(0.85); }
+        #npc-right-field    { top: 38%; left: 80%; transform: translate(-50%, -50%) scale(0.85); }
+        
+        /* Blue Runner starting right on top of 1st Base plate */
+        #npc-teammate-b1    { top: 54%; left: 69%; } 
 
-        /* Physical Moving Baseball */
         .physics-baseball {
-            position: absolute; font-size: 1.5rem;
-            left: 50%; top: 49%; transform: translate(-50%, -50%) scale(0.01);
+            position: absolute; font-size: 1.6rem;
+            left: 50%; top: 46%; transform: translate(-50%, -50%) scale(0.01);
             pointer-events: none; display: none; z-index: 10;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            filter: drop-shadow(0 4px 5px rgba(0,0,0,0.6));
         }
 
         /* ==========================================================================
-           FIRST PERSON VIEW RIG ARMS
+           FIRST PERSON POV WEAPON/BAT RIG
            ========================================================================== */
         .fps-arms-rig {
             position: absolute; bottom: -80px; left: 0; width: 100%; height: 500px;
             pointer-events: none; z-index: 15; display: flex;
-            justify-content: space-between; padding: 0 10%; box-sizing: border-box;
-            transform-style: preserve-3d; transform: translateZ(50px);
+            justify-content: space-between; padding: 0 12%; box-sizing: border-box;
+            transform-style: preserve-3d; transform: translateZ(80px);
             transition: transform 0.1s cubic-bezier(0.1, 0.8, 0.3, 1);
         }
         .held-bat {
-            width: 28px; height: 430px;
-            background: linear-gradient(90deg, #d2a472 0%, #eed2b3 30%, #af8150 70%, #63431f 100%);
-            border-radius: 6px; box-shadow: 25px 35px 20px rgba(0,0,0,0.45);
-            border: 1px solid #9e7140; position: relative;
+            width: 26px; height: 440px;
+            background: linear-gradient(90deg, #bd8d53 0%, #e8cb9f 35%, #a0723a 70%, #523414 100%);
+            border-radius: 6px; box-shadow: 30px 45px 25px rgba(0,0,0,0.5);
+            border: 1px solid #8e622f; position: relative;
         }
-        .left-bat { transform: rotate(-28deg) translateY(70px); }
-        .right-bat { transform: rotate(28deg) translateY(70px); }
+        .left-bat { transform: rotate(-26deg) translateY(90px); }
+        .right-bat { transform: rotate(26deg) translateY(90px); }
         .human-hand {
-            width: 80px; height: 100px; background: linear-gradient(to right, #e2aa8a, #ba7a57);
-            border-radius: 16px; position: absolute; bottom: 50px; left: -26px;
-            box-shadow: 5px 15px 15px rgba(0,0,0,0.5);
+            width: 82px; height: 105px; background: linear-gradient(to right, #dfa382, #b5734f);
+            border-radius: 16px; position: absolute; bottom: 60px; left: -28px;
+            box-shadow: 5px 20px 20px rgba(0,0,0,0.6);
         }
         .fps-arms-rig.swing-active {
-            transform: rotateX(35deg) rotateY(-20deg) translateZ(-30px) translateY(130px);
+            transform: rotateX(32deg) rotateY(-18deg) translateZ(-40px) translateY(140px);
         }
 
         /* ==========================================================================
-           HUD GAME SCOREBOARDS
+           BROADCAST DASH TICKER
            ========================================================================== */
         .broadcast-hud {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -146,30 +268,34 @@
             display: flex; flex-direction: column; justify-content: space-between;
         }
         .lower-third-ticker {
-            width: 100%; max-width: 1100px; margin: 0 auto;
-            background: var(--hud-dark); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 6px; height: 80px; display: flex; align-items: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9); pointer-events: auto; backdrop-filter: blur(12px);
+            width: 100%; max-width: 1150px; margin: 0 auto;
+            background: var(--hud-dark); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px; height: 85px; display: flex; align-items: center;
+            box-shadow: 0 25px 55px rgba(0,0,0,0.95); pointer-events: auto; backdrop-filter: blur(16px);
         }
         .ticker-cluster {
-            padding: 0 25px; height: 100%; display: flex; flex-direction: column; justify-content: center;
-            border-right: 1px solid rgba(255,255,255,0.08);
+            padding: 0 20px; height: 100%; display: flex; flex-direction: column; justify-content: center;
+            border-right: 1px solid rgba(255,255,255,0.06); min-width: 95px;
         }
-        .ticker-lbl { font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
-        .ticker-val { font-size: 1.35rem; font-weight: 800; color: #fff; margin-top: 2px; }
+        .ticker-lbl { font-size: 0.62rem; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+        
+        .count-dots-container { display: flex; gap: 5px; margin-top: 5px; }
+        .count-dot { width: 12px; height: 12px; border-radius: 50%; background: #222; border: 1px solid rgba(255,255,255,0.1); }
+        .count-dot.strike-active { background: var(--neon-red); box-shadow: 0 0 8px var(--neon-red); }
+        .count-dot.ball-active { background: var(--blue-team); box-shadow: 0 0 8px var(--blue-team); }
 
         .commentary-output {
-            flex-grow: 1; padding: 0 25px; font-family: monospace; font-size: 0.85rem;
-            color: var(--neon-green); font-weight: bold; letter-spacing: 0.5px;
+            flex-grow: 1; padding: 0 25px; font-family: monospace; font-size: 0.88rem;
+            color: var(--neon-green); font-weight: bold; letter-spacing: 0.3px;
         }
 
         .navigation-hint-card {
             position: absolute; top: 25px; left: 25px; background: var(--hud-dark);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 12px 18px;
-            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 18px;
+            backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .nav-row { display: flex; align-items: center; margin-bottom: 5px; font-size: 0.72rem; font-weight: bold; }
-        .key-cap { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 2px 6px; margin-right: 10px; color: var(--gold); }
+        .nav-row { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.72rem; font-weight: bold; }
+        .key-cap { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 2px 7px; margin-right: 10px; color: var(--gold); min-width: 14px; text-align: center; }
 
         .field-click-surface { position: absolute; width: 100%; height: 100%; z-index: 3; cursor: crosshair; }
     </style>
@@ -182,12 +308,120 @@
         <div id="stadium-world" class="stadium-world-3d">
             <div class="field-surface-mesh"></div>
 
-            <div id="npc-teammate-b1" class="stadium-npc">🏃‍♂️<div class="npc-badge blue-team-badge">Runner (1st Base)</div></div>
-            
-            <div id="npc-pitcher" class="stadium-npc">👤<div class="npc-badge red-team-badge">Pitcher</div></div>
-            
-            <div id="npc-fielder-b2" class="stadium-npc">🧢<div class="npc-badge red-team-badge">2B Fielder</div></div>
-            <div id="npc-fielder-b3" class="stadium-npc">🧢<div class="npc-badge 3B-badge red-team-badge">3B Fielder</div></div>
+            <div id="plate-home" class="base-plate-3d"></div>
+            <div id="plate-first" class="base-plate-3d square-bag"></div>
+            <div id="plate-second" class="base-plate-3d square-bag"></div>
+            <div id="plate-third" class="base-plate-3d square-bag"></div>
+
+            <div class="jumbotron-scoreboard">
+                <div class="jumbotron-header">
+                    <span>Ballpark Video Matrix</span>
+                    <span style="color:var(--gold)">● LIVE</span>
+                </div>
+                <table class="matrix-table">
+                    <tr>
+                        <th style="text-align:left;">TEAM</th>
+                        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
+                        <th class="highlight-col">R</th><th class="highlight-col">H</th><th class="highlight-col">E</th>
+                    </tr>
+                    <tr>
+                        <td class="team-row" style="color:var(--blue-team)">AWAY (YOU)</td>
+                        <td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td id="board-away-current">0</td>
+                        <td class="highlight-col" id="board-away-r" style="color:var(--gold)">1</td>
+                        <td class="highlight-col" id="board-away-h">3</td>
+                        <td class="highlight-col">0</td>
+                    </tr>
+                    <tr>
+                        <td class="team-row" style="color:var(--neon-red)">HOME</td>
+                        <td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>-</td>
+                        <td class="highlight-col" style="color:var(--gold)">1</td>
+                        <td class="highlight-col">4</td>
+                        <td class="highlight-col">1</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="npc-pitcher" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">1. Pitcher</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left" style="transform: rotate(35deg);"></div><div class="human-arm right" style="transform: rotate(-45deg);"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-catcher" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">2. Catcher</div>
+                    <div class="human-head-node"></div><div class="human-torso-node" style="background:#555;"></div>
+                    <div class="human-arm left" style="transform: rotate(40deg);"></div><div class="human-arm right" style="transform: rotate(-40deg);"></div>
+                    <div class="human-leg left" style="transform: translateY(-5px) rotateX(40deg);"></div><div class="human-leg right" style="transform: translateY(-5px) rotateX(40deg);"></div>
+                </div>
+            </div>
+            <div id="npc-first-base" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">3. First Base</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-second-base" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">4. Second Base</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-third-base" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">5. Third Base</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-shortstop" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">6. Shortstop</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-left-field" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">7. Left Field</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-center-field" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">8. Center Field</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+            <div id="npc-right-field" class="npc-container-3d red-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge red-team-badge">9. Right Field</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
+
+            <div id="npc-teammate-b1" class="npc-container-3d blue-team-npc">
+                <div class="human-mesh-root">
+                    <div class="npc-badge blue-team-badge">Runner (1st Base)</div>
+                    <div class="human-head-node"></div><div class="human-torso-node"></div>
+                    <div class="human-arm left"></div><div class="human-arm right"></div>
+                    <div class="human-leg left"></div><div class="human-leg right"></div>
+                </div>
+            </div>
             
             <div id="ball-element" class="physics-baseball">⚾</div>
         </div>
@@ -196,33 +430,36 @@
 
         <div id="arms-rig" class="fps-arms-rig">
             <div class="held-bat left-bat"><div class="human-hand"></div></div>
-            <div class="held-bat right-bat"><div class="human-hand" style="left:auto; right:-26px;"></div></div>
+            <div class="held-bat right-bat"><div class="human-hand" style="left:auto; right:-28px;"></div></div>
         </div>
 
         <div class="broadcast-hud">
             <div class="navigation-hint-card">
-                <div class="nav-row"><span class="key-cap">W</span> Move Forward / Approach Mound</div>
-                <div class="nav-row"><span class="key-cap">S</span> Move Backward</div>
-                <div class="nav-row"><span class="key-cap">A</span> Strafe Field Left</div>
-                <div class="nav-row"><span class="key-cap">D</span> Strafe Field Right</div>
-                <div class="nav-row" style="margin-top:6px; color:#8b949e;"><span class="key-cap" style="color:#fff;">CLICK</span> Execute Power Swing</div>
+                <div class="nav-row"><span class="key-cap">E</span> <b>Call Pitch Delivery</b></div>
+                <div class="nav-row"><span class="key-cap">W</span> Walk Forward</div>
+                <div class="nav-row"><span class="key-cap">S</span> Walk Backward</div>
+                <div class="nav-row"><span class="key-cap">A</span> Strafe Left</div>
+                <div class="nav-row"><span class="key-cap">D</span> Strafe Right</div>
+                <div class="nav-row" style="margin-top:6px; color:#8b949e;"><span class="key-cap" style="color:#fff;">CLICK</span> Swing Bat</div>
             </div>
 
             <div class="lower-third-ticker">
-                <div class="ticker-cluster" style="background: rgba(255,255,255,0.02);">
-                    <span class="ticker-lbl" style="color:var(--gold);">Batter Lineup</span>
-                    <span id="hud-name" class="ticker-val" style="font-size:1.05rem;">PLAYER_1</span>
-                </div>
                 <div class="ticker-cluster">
-                    <span class="ticker-lbl">Team Score (Runs)</span>
-                    <span id="hud-runs" class="ticker-val">0</span>
+                    <span class="ticker-lbl">Strikes (Max 3)</span>
+                    <div class="count-dots-container" id="strike-dots">
+                        <div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div>
+                    </div>
                 </div>
+
                 <div class="ticker-cluster">
-                    <span class="ticker-lbl">Personal Hits</span>
-                    <span id="hud-hits" class="ticker-val">0</span>
+                    <span class="ticker-lbl">Balls (Max 4)</span>
+                    <div class="count-dots-container" id="ball-dots">
+                        <div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div>
+                    </div>
                 </div>
+
                 <div id="commentary-feed" class="commentary-output">
-                    [BROADCAST]: Top of the inning. You stand at home plate. Your teammate is holding first base. Click the Pitcher to call the throw!
+                    [BROADCAST]: Base plates placed on the field diamond track. You are standing directly over Home Plate. Press [E] to start the pitch delivery!
                 </div>
             </div>
         </div>
@@ -230,33 +467,65 @@
 
     <script>
         let gameState = {
-            name: "PLAYER", runs: 0, hits: 0,
+            runs: 1, hits: 3,
+            strikes: 0, balls: 0,
             pitchActive: false, swingActive: false, ballHitRoute: false,
-            posX: 0, posZ: 0, maxBounds: 50
+            currentPitchType: "strike",
+            posX: 0, posZ: 0, maxBounds: 45
         };
 
         function sendCommentary(text) {
             const el = document.getElementById('commentary-feed');
-            el.style.color = text.includes("STRIKE") ? "var(--neon-red)" : (text.includes("CRACK") ? "var(--gold)" : "var(--neon-green)");
+            if (text.includes("STRIKE")) el.style.color = "var(--neon-red)";
+            else if (text.includes("BALL") || text.includes("WALK")) el.style.color = "var(--blue-team)";
+            else if (text.includes("CRACK")) el.style.color = "var(--gold)";
+            else el.style.color = "var(--neon-green)";
             el.innerText = `[BROADCAST]: ${text}`;
         }
 
         function refreshHUD() {
-            document.getElementById('hud-name').innerText = gameState.name.toUpperCase();
-            document.getElementById('hud-runs').innerText = gameState.runs;
-            document.getElementById('hud-hits').innerText = gameState.hits;
+            document.getElementById('board-away-r').innerText = gameState.runs;
+            document.getElementById('board-away-h').innerText = gameState.hits;
+            document.getElementById('board-away-current').innerText = gameState.runs - 1;
+
+            // Render Strike Dots
+            const strikeDots = document.getElementById('strike-dots').children;
+            for(let i=0; i<3; i++) {
+                if(i < gameState.strikes) strikeDots[i].classList.add('strike-active');
+                else strikeDots[i].classList.remove('strike-active');
+            }
+
+            // Render Ball Dots
+            const ballDots = document.getElementById('ball-dots').children;
+            for(let i=0; i<4; i++) {
+                if(i < gameState.balls) ballDots[i].classList.add('ball-active');
+                else ballDots[i].classList.remove('ball-active');
+            }
+        }
+
+        function resetAtBat(announcement) {
+            gameState.strikes = 0;
+            gameState.balls = 0;
+            setTimeout(() => {
+                sendCommentary(announcement + " Preparing for next pitch cycle sequence.");
+                refreshHUD();
+            }, 1600);
         }
 
         // ==========================================================================
-        // WASD PLAYER VECTOR MOTION TRACKER ENGINE
+        // KEYBOARD SYSTEM
         // ==========================================================================
         const pressedKeys = {};
-        window.addEventListener('keydown', (e) => { pressedKeys[e.key.toLowerCase()] = true; });
+        window.addEventListener('keydown', (e) => { 
+            const key = e.key.toLowerCase();
+            pressedKeys[key] = true; 
+            if (key === 'e') executePitchDelivery();
+        });
         window.addEventListener('keyup', (e) => { pressedKeys[e.key.toLowerCase()] = false; });
 
         function processMovementLoop() {
             let moved = false;
-            const speed = 1.3;
+            const speed = 1.2;
 
             if (pressedKeys['w']) { gameState.posZ = Math.min(gameState.maxBounds, gameState.posZ + speed); moved = true; }
             if (pressedKeys['s']) { gameState.posZ = Math.max(-gameState.maxBounds, gameState.posZ - speed); moved = true; }
@@ -265,40 +534,69 @@
 
             if (moved) {
                 const world = document.getElementById('stadium-world');
-                let depthScale = 1 + (gameState.posZ * 0.008);
-                world.style.transform = `scale(${depthScale}) translate3d(${gameState.posX * 3.5}px, ${gameState.posZ * 4.5}px, 0px)`;
+                let depthScale = 1 + (gameState.posZ * 0.007);
+                world.style.transform = `scale(${depthScale}) translate3d(${gameState.posX * 4}px, ${gameState.posZ * 5}px, 0px)`;
+                
+                document.querySelectorAll('.npc-container-3d').forEach(npc => {
+                    if(npc.id !== 'npc-catcher') {
+                        npc.style.transform = `translate(-50%, -50%) scale(${1 / depthScale})`;
+                    }
+                });
             }
             requestAnimationFrame(processMovementLoop);
         }
 
         // ==========================================================================
-        // BALL PHYSICS & COMPLEX MULTI-NPC CONCURRENT ANIMATIONS
+        // UMPIRE RULES ENGINE
         // ==========================================================================
+        function checkUmpireUmpRules() {
+            if (gameState.strikes >= 3) {
+                resetAtBat("STRIKEOUT! 3 strikes recorded against you.");
+            } else if (gameState.balls >= 4) {
+                gameState.runs++;
+                resetAtBat("WALK! 4 balls drawn. +1 Run awarded by loading the bases up.");
+            }
+        }
+
         function executePitchDelivery() {
             if (gameState.pitchActive || gameState.ballHitRoute) return;
             gameState.pitchActive = true;
 
-            sendCommentary("The pitcher checks the base runner on first... turns and throws an inside heater!");
+            gameState.currentPitchType = Math.random() > 0.40 ? "strike" : "ball";
+            sendCommentary("The pitcher winds up on the mound rubber and delivers...");
 
             const ball = document.getElementById('ball-element');
-            ball.style.removeAttribute('style');
             ball.style.display = 'block';
             ball.style.transition = 'none';
             ball.style.transform = 'translate(-50%, -50%) scale(0.01)';
-            ball.style.top = '49%'; ball.style.left = '50%';
+            ball.style.top = '46%'; ball.style.left = '50%';
 
             setTimeout(() => {
                 ball.style.transition = 'all 480ms cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                ball.style.transform = 'translate(-50%, -50%) scale(8.5)';
-                ball.style.top = '88%';
-                ball.style.left = `${49 + Math.random() * 3}%`;
+                ball.style.transform = 'translate(-50%, -50%) scale(9.5)';
+                ball.style.top = '86%';
+                
+                if (gameState.currentPitchType === "strike") {
+                    ball.style.left = `${48 + Math.random() * 4}%`; // Crosses over Home Plate
+                } else {
+                    ball.style.left = Math.random() > 0.5 ? '30%' : '70%'; // Wide outside tracking frames
+                }
             }, 20);
 
             setTimeout(() => {
                 if (gameState.pitchActive) {
                     gameState.pitchActive = false;
                     ball.style.display = 'none';
-                    sendCommentary("STRIKE! Blazed over home plate, right past your swing window.");
+                    
+                    if (gameState.currentPitchType === "strike") {
+                        gameState.strikes++;
+                        sendCommentary("STRIKE! Pitch flies perfectly straight right through the center plate.");
+                    } else {
+                        gameState.balls++;
+                        sendCommentary("BALL! Completely wide. Good look laying off that one.");
+                    }
+                    checkUmpireUmpRules();
+                    refreshHUD();
                 }
             }, 500);
         }
@@ -316,78 +614,74 @@
                 const values = transform.split('(')[1]?.split(')')[0]?.split(',') || [];
                 const ballScaleX = parseFloat(values[0]) || 0.01;
 
-                // Validate hitting timeline matrix criteria windows
-                if (ballScaleX >= 4.0 && ballScaleX <= 6.8) {
-                    triggerSuccessfulHitTrajectory();
+                if (ballScaleX >= 4.5 && ballScaleX <= 7.5) {
+                    if (gameState.currentPitchType === "strike") {
+                        triggerSuccessfulHitTrajectory();
+                    } else {
+                        gameState.pitchActive = false;
+                        ball.style.display = 'none';
+                        gameState.strikes++;
+                        sendCommentary("STRIKE! You bit on an outside pitch and went fishing out of the zone.");
+                        checkUmpireUmpRules();
+                        refreshHUD();
+                    }
                 } else {
-                    sendCommentary("STRIKE! Bad bat timing. You swung out entirely out of sync with the velocity.");
                     gameState.pitchActive = false;
                     ball.style.display = 'none';
+                    gameState.strikes++;
+                    sendCommentary("STRIKE! Swing execution timed entirely out of phase.");
+                    checkUmpireUmpRules();
+                    refreshHUD();
                 }
             }
-
             setTimeout(() => { rig.classList.remove('swing-active'); gameState.swingActive = false; }, 160);
         }
 
-        // ==========================================================================
-        // LIVING TEAMMATE AND OPPONENT AI STRATEGY LOOPS
-        // ==========================================================================
         function triggerSuccessfulHitTrajectory() {
             gameState.pitchActive = false;
             gameState.ballHitRoute = true;
-            gameState.hits += 1;
-            refreshHUD();
-
-            sendCommentary("CRACK! You launch a towering drive into right-center field! The stadium is going wild!");
+            gameState.hits++;
+            
+            sendCommentary("CRACK! High line drive smashed deep past second base into right field!");
 
             const ball = document.getElementById('ball-element');
-            
-            // Physical hit trajectory: ball launches deep out into the outfield grass coordinates
-            ball.style.transition = 'all 1.8s cubic-bezier(0.0, 0.35, 0.15, 1.0)';
-            ball.style.top = '42%';
-            ball.style.left = '56%';
-            ball.style.transform = 'translate(-50%, -50%) scale(0.4)';
+            ball.style.transition = 'all 2.2s cubic-bezier(0.1, 0.45, 0.1, 1)';
+            ball.style.top = '36%'; ball.style.left = '62%';
+            ball.style.transform = 'translate(-50%, -50%) scale(0.35)';
 
-            // TRIGGER AI RUNNER: Your teammate sprints from 1st base to home plate!
+            // AI Blue Teammate leaves 1st base plate, rounds 2nd and 3rd, and heads home
             const runnerTeammate = document.getElementById('npc-teammate-b1');
-            runnerTeammate.style.top = '45%'; // Runs past second base
-            runnerTeammate.style.left = '50%';
+            runnerTeammate.style.top = '43.5%'; runnerTeammate.style.left = '50%'; // Reaches 2nd Base
 
-            // TRIGGER AI FIELDERS: Opponents rush toward the ball's impact zone
-            const fielder2B = document.getElementById('npc-fielder-b2');
-            const fielder3B = document.getElementById('npc-fielder-b3');
-            
+            // Outfield defenders hustle to intercept the baseball
+            const cf = document.getElementById('npc-center-field');
+            const rf = document.getElementById('npc-right-field');
             setTimeout(() => {
-                fielder2B.style.top = '43%'; fielder2B.style.left = '54%';
-                fielder3B.style.top = '44%'; fielder3B.style.left = '48%';
+                cf.style.top = '36%'; cf.style.left = '55%';
+                rf.style.top = '36%'; rf.style.left = '70%';
             }, 300);
 
-            // Complete the runner cycle round home sequence
             setTimeout(() => {
-                runnerTeammate.style.top = '80%'; // Swings round third base straight to home plate
-                runnerTeammate.style.left = '45%';
-            }, 900);
+                runnerTeammate.style.top = '54%'; runnerTeammate.style.left = '31%'; // Rounds 3rd Base
+            }, 1100);
 
-            // Resolve the play outcome
             setTimeout(() => {
-                gameState.runs += 1;
-                refreshHUD();
-                sendCommentary("SAFE! Your teammate slides under the tag at home plate! Incredible base-running AI! +1 RUN scored!");
+                gameState.runs++;
+                sendCommentary("SAFE! The runner tags Home Plate! Massive contact hitting! +1 RUN scored!");
                 
-                // Safely reset field entities to initial starting rosters structures
                 ball.style.display = 'none';
                 runnerTeammate.removeAttribute('style');
-                fielder2B.removeAttribute('style');
-                fielder3B.removeAttribute('style');
+                cf.removeAttribute('style');
+                rf.removeAttribute('style');
                 gameState.ballHitRoute = false;
-            }, 1800);
+                
+                gameState.strikes = 0;
+                gameState.balls = 0;
+                refreshHUD();
+            }, 2200);
         }
 
         window.onload = () => {
-            document.getElementById('npc-pitcher').onclick = (e) => {
-                e.stopPropagation();
-                executePitchDelivery();
-            };
             refreshHUD();
             requestAnimationFrame(processMovementLoop);
         };

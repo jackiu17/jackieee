@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRO SIMULATOR: Dynamic Diamond Physics & Base-Running Engine</title>
+    <title>BASEBALL SIMULATOR</title>
     <style>
         :root {
             --hud-dark: rgba(11, 15, 23, 0.96);
@@ -17,6 +17,8 @@
             --jersey-white: #f8f9fa;
             --skin-tone: #e0ac69;
             --base-white: #ffffff;
+            --roblox-bg: #1e2022;
+            --roblox-card: #2c2e30;
         }
 
         body, html {
@@ -30,176 +32,159 @@
         }
 
         /* ==========================================================================
+           ROBLOX STYLE MODE SELECTOR MENU GUI
+           ========================================================================== */
+        .roblox-menu-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 12, 16, 0.85); z-index: 200;
+            display: flex; align-items: center; justify-content: center;
+            backdrop-filter: blur(12px);
+            transition: opacity 0.3s ease;
+        }
+        .roblox-menu-card {
+            background: var(--roblox-bg); border: 2px solid rgba(255,255,255,0.05);
+            border-radius: 12px; width: 95%; max-width: 700px; padding: 30px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.7); text-align: center;
+        }
+        .roblox-menu-title { font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 5px; color: #fff; }
+        .roblox-menu-subtitle { font-size: 0.95rem; color: #8a8d90; margin-bottom: 20px; font-family: monospace; }
+        
+        /* High Records Grid Layout */
+        .datastore-container-grid {
+            display: flex; gap: 15px; margin-bottom: 25px;
+        }
+        .menu-datastore-card {
+            background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 6px; padding: 12px 18px; flex: 1;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .datastore-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: #8a8d90; text-align: left; font-weight: bold; }
+        .datastore-mode-name { color: #fff; font-size: 0.85rem; font-weight: bold; text-align: left; margin-top: 2px; }
+        .datastore-right-panel { display: flex; align-items: center; gap: 12px; }
+        .datastore-value { font-size: 1.3rem; font-weight: 800; color: var(--gold); font-family: monospace; }
+        .datastore-reset-btn {
+            background: rgba(231, 76, 60, 0.12); color: var(--neon-red); border: 1px solid rgba(231, 76, 60, 0.25);
+            border-radius: 4px; padding: 4px 8px; font-size: 0.65rem; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; transition: background 0.2s, color 0.2s;
+        }
+        .datastore-reset-btn:hover { background: rgba(231, 76, 60, 0.3); color: #fff; }
+
+        .mode-options-grid { display: flex; gap: 20px; justify-content: center; }
+        .mode-card-btn {
+            background: var(--roblox-card); border: 2px solid rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 25px 20px; flex: 1; cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
+            text-align: left; display: flex; flex-direction: column;
+        }
+        .mode-card-btn:hover {
+            transform: translateY(-5px); border-color: var(--gold); background: #35383b;
+        }
+        .mode-btn-title { font-size: 1.25rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+        .mode-btn-desc { font-size: 0.8rem; color: #b1b5b9; line-height: 1.4; flex-grow: 1; }
+        .mode-btn-badge {
+            margin-top: 15px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;
+            padding: 4px 8px; border-radius: 4px; display: inline-block; width: fit-content;
+        }
+        .blitz-badge { background: rgba(231, 76, 60, 0.2); color: var(--neon-red); }
+        .sandbox-badge { background: rgba(46, 204, 113, 0.2); color: var(--neon-green); }
+
+        /* ==========================================================================
            3D CAMERA VIEWPORT
            ========================================================================== */
         .viewport-container {
-            position: relative;
-            width: 100%; height: 100vh;
-            background: #000; overflow: hidden;
-            perspective: 1000px;
+            position: relative; width: 100%; height: 100vh;
+            background: #000; overflow: hidden; perspective: 1000px;
         }
-
         .stadium-world-3d {
-            width: 100%; height: 100%;
-            position: absolute;
+            width: 100%; height: 100%; position: absolute;
             background: 
                 radial-gradient(circle at 50% 45%, rgba(220, 118, 51, 0.25) 0%, transparent 60%),
                 linear-gradient(to bottom, #050b14 0%, #0d192d 32%, #211c38 48%, #4a2840 58%, #873634 65%, #222 66%);
-            transform-style: preserve-3d;
-            transition: transform 0.05s ease-out;
+            transform-style: preserve-3d; transition: transform 0.05s ease-out;
         }
-
         .stadium-world-3d::before {
-            content: ''; position: absolute;
-            top: 36%; left: -10%; width: 120%; height: 30%;
+            content: ''; position: absolute; top: 36%; left: -10%; width: 120%; height: 30%;
             background: 
                 linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 15%, rgba(0,0,0,0.8) 75%, #0f2d16 75%, #081a0d 100%),
                 repeating-linear-gradient(180deg, #1b1e22 0px, #1b1e22 2px, #0e1013 2px, #0e1013 8px),
                 repeating-linear-gradient(90deg, #ff5733 0px, #ff5733 3px, #33ff57 3px, #33ff57 6px, #3357ff 6px, #3357ff 9px);
-            background-blend-mode: normal, overlay, multiply;
-            border-bottom: 4px solid #111;
-            box-shadow: inset 0 -30px 40px rgba(0,0,0,0.9);
-            transform: rotateX(2deg);
+            background-blend-mode: normal, overlay, multiply; border-bottom: 4px solid #111;
+            box-shadow: inset 0 -30px 40px rgba(0,0,0,0.9); transform: rotateX(2deg);
         }
-
         .stadium-lights {
             position: absolute; top: 10%; width: 100%; display: flex;
-            justify-content: space-between; padding: 0 10%; box-sizing: border-box;
-            pointer-events: none; z-index: 2;
+            justify-content: space-between; padding: 0 10%; box-sizing: border-box; pointer-events: none; z-index: 2;
         }
         .light-bank {
             width: 180px; height: 35px; background: #ffffff; border-radius: 4px;
-            box-shadow: 0 0 10px #fff, 0 0 40px 10px rgba(255,255,255,0.7), 0 0 120px 30px rgba(255,255,255,0.4);
-            opacity: 0.98;
+            box-shadow: 0 0 10px #fff, 0 0 40px 10px rgba(255,255,255,0.7), 0 0 120px 30px rgba(255,255,255,0.4); opacity: 0.98;
         }
 
         /* Jumbotron Scoreboard Matrix */
         .jumbotron-scoreboard {
-            position: absolute;
-            top: 15%; left: 50%;
-            transform: translateX(-50%) translateZ(-100px);
-            width: 480px; height: 130px;
-            background: #090d16;
-            border: 4px solid #222e45;
-            border-radius: 6px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.9);
-            z-index: 2;
-            padding: 10px;
-            box-sizing: border-box;
-            font-family: 'Courier New', Courier, monospace;
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%) translateZ(-100px);
+            width: 480px; height: 130px; background: #090d16; border: 4px solid #222e45; border-radius: 6px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.9); z-index: 2; padding: 10px;
+            box-sizing: border-box; font-family: 'Courier New', Courier, monospace;
         }
         .jumbotron-header {
-            display: flex; justify-content: space-between;
-            border-bottom: 2px solid #1f2c42; padding-bottom: 4px;
-            font-size: 0.75rem; color: #5f7499; font-weight: bold; text-transform: uppercase;
+            display: flex; justify-content: space-between; border-bottom: 2px solid #1f2c42;
+            padding-bottom: 4px; font-size: 0.75rem; color: #5f7499; font-weight: bold; text-transform: uppercase;
         }
-        .matrix-table {
-            width: 100%; margin-top: 8px; border-collapse: collapse; text-align: center;
-        }
+        .matrix-table { width: 100%; margin-top: 8px; border-collapse: collapse; text-align: center; }
         .matrix-table th { font-size: 0.7rem; color: #8ba2cc; padding: 2px; font-weight: normal; }
         .matrix-table td { font-size: 1.1rem; font-weight: bold; color: var(--gold); padding: 4px 2px; }
         .matrix-table .team-row { color: #fff; text-align: left; font-size: 0.85rem; font-family: sans-serif; font-weight: bold;}
         .matrix-table .highlight-col { color: #fff; background: rgba(255,255,255,0.04); width: 35px; }
 
-        /* Turf Map Layout Mesh */
+        /* Field Infrastructure */
         .field-surface-mesh {
-            position: absolute; bottom: 0; left: 50%;
-            width: 400vw; height: 145vh;
-            background: var(--turf-dark);
+            position: absolute; bottom: 0; left: 50%; width: 400vw; height: 145vh; background: var(--turf-dark);
             background-image: 
                 radial-gradient(circle at 50% 100%, transparent 14.8%, rgba(0,0,0,0.3) 14.9%, var(--clay-color) 15%, var(--clay-color) 25%, rgba(0,0,0,0.4) 25.1%, transparent 25.3%),
                 radial-gradient(circle at 50% 100%, var(--clay-color) 0%, var(--clay-color) 4.8%, #fff 4.9%, #fff 5.1%, transparent 5.2%),
                 repeating-linear-gradient(90deg, var(--turf-dark) 0px, var(--turf-dark) 70px, var(--turf-light) 70px, var(--turf-light) 140px);
-            background-blend-mode: normal, normal, soft-light;
-            transform: translateX(-50%) rotateX(78deg);
-            transform-origin: bottom center;
-            box-shadow: inset 0 100px 200px rgba(0,0,0,0.8);
-            z-index: 1;
+            background-blend-mode: normal, normal, soft-light; transform: translateX(-50%) rotateX(78deg);
+            transform-origin: bottom center; box-shadow: inset 0 100px 200px rgba(0,0,0,0.8); z-index: 1;
         }
-
-        /* 3D Base Plates */
         .base-plate-3d {
             position: absolute; width: 18px; height: 18px; background: var(--base-white); z-index: 2;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(0,0,0,0.2);
-            transform-style: preserve-3d;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 3px rgba(0,0,0,0.2); transform-style: preserve-3d;
         }
         .square-bag { transform: translate(-50%, -50%) rotateX(20deg) rotateZ(45deg); transition: background 0.3s; }
         .bag-occupied { background: var(--gold) !important; box-shadow: 0 0 10px var(--gold); }
-
-        #plate-home {
-            top: 82%; left: 50%; width: 20px; height: 20px; background: var(--base-white);
-            transform: translate(-50%, -50%) rotateX(25deg);
-            clip-path: polygon(50% 100%, 100% 50%, 100% 0%, 0% 0%, 0% 50%);
-        }
+        #plate-home { top: 82%; left: 50%; width: 20px; height: 20px; background: var(--base-white); transform: translate(-50%, -50%) rotateX(25deg); clip-path: polygon(50% 100%, 100% 50%, 100% 0%, 0% 0%, 0% 50%); }
         #plate-first  { top: 54%; left: 69%; }
         #plate-second { top: 43.5%; left: 50%; }
         #plate-third  { top: 54%; left: 31%; }
 
-        /* ==========================================================================
-           PROCEDURAL 3D DEPLOYED SKELETAL MODELS
-           ========================================================================== */
-        .npc-container-3d {
-            position: absolute; width: 50px; height: 110px; transform-style: preserve-3d;
-            transform: translate(-50%, -50%); z-index: 5;
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        /* Avatars Styling */
+        .npc-container-3d { position: absolute; width: 50px; height: 110px; transform-style: preserve-3d; transform: translate(-50%, -50%); z-index: 5; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
         .human-mesh-root { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
-        .human-head-node {
-            position: absolute; top: 0; left: 15px; width: 18px; height: 18px;
-            background: var(--skin-tone); border-radius: 50%; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3);
-        }
-        .human-head-node::before {
-            content: ''; position: absolute; top: -3px; left: -2px; width: 22px; height: 10px; border-radius: 10px 12px 0 0;
-        }
+        .human-head-node { position: absolute; top: 0; left: 15px; width: 18px; height: 18px; background: var(--skin-tone); border-radius: 50%; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.3); }
+        .human-head-node::before { content: ''; position: absolute; top: -3px; left: -2px; width: 22px; height: 10px; border-radius: 10px 12px 0 0; }
         .red-team-npc .human-head-node::before { background: var(--neon-red); }
         .blue-team-npc .human-head-node::before { background: var(--blue-team); }
-
-        .human-torso-node {
-            position: absolute; top: 20px; left: 11px; width: 26px; height: 40px; border-radius: 4px;
-        }
+        .human-torso-node { position: absolute; top: 20px; left: 11px; width: 26px; height: 40px; border-radius: 4px; }
         .red-team-npc .human-torso-node { background: var(--jersey-white); border-top: 5px solid var(--neon-red); }
         .blue-team-npc .human-torso-node { background: var(--jersey-white); border-top: 5px solid var(--blue-team); }
-
-        .human-arm {
-            position: absolute; top: 22px; width: 7px; height: 32px; background: var(--jersey-white);
-            border-bottom: 6px solid var(--skin-tone); border-radius: 3px; transform-origin: top center;
-        }
-        .human-arm.left { left: 2px; transform: rotate(10deg); }
-        .human-arm.right { right: 2px; transform: rotate(-10deg); }
-        .human-leg {
-            position: absolute; top: 62px; width: 9px; height: 40px; background: var(--jersey-white);
-            border-bottom: 10px solid #111; transform-origin: top center;
-        }
+        .human-arm { position: absolute; top: 22px; width: 7px; height: 32px; background: var(--jersey-white); border-bottom: 6px solid var(--skin-tone); border-radius: 3px; transform-origin: top center; }
+        .human-arm.left { left: 2px; transform: rotate(10deg); } .human-arm.right { right: 2px; transform: rotate(-10deg); }
+        .human-leg { position: absolute; top: 62px; width: 9px; height: 40px; background: var(--jersey-white); border-bottom: 10px solid #111; transform-origin: top center; }
         .human-leg.left { left: 10px; } .human-leg.right { right: 10px; }
-
-        .npc-badge {
-            position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
-            background: var(--hud-dark); color: #fff; padding: 2px 7px; border-radius: 4px;
-            font-size: 0.58rem; font-weight: 800; white-space: nowrap; border: 1px solid rgba(255,255,255,0.12);
-        }
+        .npc-badge { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: var(--hud-dark); color: #fff; padding: 2px 7px; border-radius: 4px; font-size: 0.58rem; font-weight: 800; white-space: nowrap; border: 1px solid rgba(255,255,255,0.12); }
         .blue-team-badge { border-color: var(--blue-team); color: #a6d5ff; }
         .red-team-badge { border-color: var(--neon-red); color: #ffa3a3; }
 
-        /* Roster Positions Matrix */
-        #npc-pitcher        { top: 46%; left: 50%; transform: translate(-50%, -50%) scale(1.1); }
-        #npc-catcher        { top: 88%; left: 50%; transform: translate(-50%, -50%) scale(1.5); }
-        #npc-first-base     { top: 52%; left: 73%; }
-        #npc-second-base    { top: 40%; left: 56%; }
-        #npc-third-base     { top: 52%; left: 27%; }
-        #npc-shortstop      { top: 40%; left: 44%; }
-        #npc-left-field     { top: 38%; left: 20%; transform: translate(-50%, -50%) scale(0.85); }
-        #npc-center-field   { top: 37%; left: 50%; transform: translate(-50%, -50%) scale(0.85); }
-        #npc-right-field    { top: 38%; left: 80%; transform: translate(-50%, -50%) scale(0.85); }
+        #npc-pitcher { top: 46%; left: 50%; transform: translate(-50%, -50%) scale(1.1); }
+        #npc-catcher { top: 88%; left: 50%; transform: translate(-50%, -50%) scale(1.5); }
+        #npc-first-base { top: 52%; left: 73%; } #npc-second-base { top: 40%; left: 56%; } #npc-third-base { top: 52%; left: 27%; } #npc-shortstop { top: 40%; left: 44%; }
+        #npc-left-field { top: 38%; left: 20%; transform: translate(-50%, -50%) scale(0.85); } #npc-center-field { top: 37%; left: 50%; transform: translate(-50%, -50%) scale(0.85); } #npc-right-field { top: 38%; left: 80%; transform: translate(-50%, -50%) scale(0.85); }
         
-        /* Dynamic Pool Holders for Live Blue Team Runners */
         .runner-pool-element { display: none; z-index: 6; }
+        .physics-baseball { position: absolute; font-size: 1.6rem; left: 50%; top: 46%; transform: translate(-50%, -50%) scale(0.01); pointer-events: none; display: none; z-index: 10; filter: drop-shadow(0 4px 5px rgba(0,0,0,0.6)); }
 
-        .physics-baseball {
-            position: absolute; font-size: 1.6rem; left: 50%; top: 46%; transform: translate(-50%, -50%) scale(0.01);
-            pointer-events: none; display: none; z-index: 10; filter: drop-shadow(0 4px 5px rgba(0,0,0,0.6));
-        }
-
-        /* First Person POV Weapon/Bat Rig */
+        /* POV Bat Frame Rig */
         .fps-arms-rig {
             position: absolute; bottom: -80px; left: 0; width: 100%; height: 500px; pointer-events: none; z-index: 15;
             display: flex; justify-content: space-between; padding: 0 12%; box-sizing: border-box;
@@ -211,27 +196,15 @@
         }
         .left-bat { transform: rotate(-26deg) translateY(90px); }
         .right-bat { transform: rotate(26deg) translateY(90px); }
-        .human-hand {
-            width: 82px; height: 105px; background: linear-gradient(to right, #dfa382, #b5734f);
-            border-radius: 16px; position: absolute; bottom: 60px; left: -28px; box-shadow: 5px 20px 20px rgba(0,0,0,0.6);
-        }
+        .human-hand { width: 82px; height: 105px; background: linear-gradient(to right, #dfa382, #b5734f); border-radius: 16px; position: absolute; bottom: 60px; left: -28px; box-shadow: 5px 20px 20px rgba(0,0,0,0.6); }
         .fps-arms-rig.swing-active { transform: rotateX(32deg) rotateY(-18deg) translateZ(-40px) translateY(140px); }
 
-        /* HUD Ticker System */
-        .broadcast-hud {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20;
-            padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .lower-third-ticker {
-            width: 100%; max-width: 1150px; margin: 0 auto; background: var(--hud-dark); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 6px; height: 85px; display: flex; align-items: center; box-shadow: 0 25px 55px rgba(0,0,0,0.95);
-            pointer-events: auto; backdrop-filter: blur(16px);
-        }
-        .ticker-cluster {
-            padding: 0 20px; height: 100%; display: flex; flex-direction: column; justify-content: center;
-            border-right: 1px solid rgba(255,255,255,0.06); min-width: 95px;
-        }
+        /* HUD Panels */
+        .broadcast-hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+        .lower-third-ticker { width: 100%; max-width: 1150px; margin: 0 auto; background: var(--hud-dark); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; height: 85px; display: flex; align-items: center; box-shadow: 0 25px 55px rgba(0,0,0,0.95); pointer-events: auto; backdrop-filter: blur(16px); }
+        .ticker-cluster { padding: 0 15px; height: 100%; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid rgba(255,255,255,0.06); min-width: 95px; }
         .ticker-lbl { font-size: 0.62rem; color: #8b949e; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; }
+        .ticker-val-big { font-size: 1.6rem; font-weight: 800; color: #fff; font-family: monospace; }
         
         .count-dots-container { display: flex; gap: 5px; margin-top: 5px; }
         .count-dot { width: 12px; height: 12px; border-radius: 50%; background: #222; border: 1px solid rgba(255,255,255,0.1); }
@@ -239,17 +212,73 @@
         .count-dot.ball-active { background: var(--blue-team); box-shadow: 0 0 8px var(--blue-team); }
 
         .commentary-output { flex-grow: 1; padding: 0 25px; font-family: monospace; font-size: 0.88rem; color: var(--neon-green); font-weight: bold; }
-        .navigation-hint-card {
-            position: absolute; top: 25px; left: 25px; background: var(--hud-dark); border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 6px; padding: 12px 18px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
+        .navigation-hint-card { position: absolute; top: 25px; left: 25px; background: var(--hud-dark); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 12px 18px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .nav-row { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.72rem; font-weight: bold; }
         .key-cap { background: #21262d; border: 1px solid #30363d; border-radius: 4px; padding: 2px 7px; margin-right: 10px; color: var(--gold); min-width: 14px; text-align: center; }
+        
+        .exit-hub-btn { background: #21262d; border: 1px solid rgba(255,255,255,0.15); color: #c9d1d9; cursor: pointer; padding: 6px 14px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; margin-left: auto; margin-right: 15px; }
+        .exit-hub-btn:hover { background: #30363d; color: #fff; }
+
+        /* Terminal Outcome Screens */
+        .terminal-modal-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(4, 6, 10, 0.95); z-index: 100; align-items: center; justify-content: center; flex-direction: column; text-align: center; backdrop-filter: blur(8px); }
+        .modal-content-box { background: #0d1117; border: 2px solid rgba(255,255,255,0.1); padding: 40px 60px; border-radius: 8px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+        .modal-title { font-size: 2.8rem; font-weight: 900; margin-bottom: 10px; letter-spacing: 1px; }
+        .modal-desc { font-size: 1.1rem; color: #8b949e; margin-bottom: 30px; font-family: monospace; }
+        .action-reset-btn { background: var(--gold); color: #000; border: none; padding: 12px 34px; font-weight: bold; font-size: 1rem; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: transform 0.2s; }
+        .action-reset-btn:hover { transform: scale(1.05); }
 
         .field-click-surface { position: absolute; width: 100%; height: 100%; z-index: 3; cursor: crosshair; }
     </style>
 </head>
 <body>
+
+    <!-- CENTRAL SELECTION HUB MODAL -->
+    <div id="game-mode-hub" class="roblox-menu-overlay">
+        <div class="roblox-menu-card">
+            <div class="roblox-menu-title">BASEBALL SIMULATOR</div>
+            <div class="roblox-menu-subtitle">Choose a game mode variant to spawn</div>
+            
+            <!-- Dual Isolated Local DataStore Records Grid -->
+            <div class="datastore-container-grid">
+                <!-- Blitz Store Card -->
+                <div class="menu-datastore-card">
+                    <div>
+                        <div class="datastore-label">DataStore // Blitz</div>
+                        <div class="datastore-mode-name">Blitz Personal Best</div>
+                    </div>
+                    <div class="datastore-right-panel">
+                        <div id="menu-blitz-high-val" class="datastore-value">0.00</div>
+                        <button class="datastore-reset-btn" onclick="wipeDataStoreKey('blitz', event)">Reset</button>
+                    </div>
+                </div>
+
+                <!-- Sandbox Store Card -->
+                <div class="menu-datastore-card">
+                    <div>
+                        <div class="datastore-label">DataStore // Sandbox</div>
+                        <div class="datastore-mode-name">Infinite Personal Best</div>
+                    </div>
+                    <div class="datastore-right-panel">
+                        <div id="menu-sandbox-high-val" class="datastore-value">0.00</div>
+                        <button class="datastore-reset-btn" onclick="wipeDataStoreKey('sandbox', event)">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mode-options-grid">
+                <button class="mode-card-btn" onclick="selectGameVariant('blitz')">
+                    <span class="mode-btn-title">2-Min Blitz Mode</span>
+                    <span class="mode-btn-desc">Sprint against the server timer! Secure 5 full points inside 2 minutes. Warning: Each Out deducts 0.25 points from your scorecard.</span>
+                    <span class="mode-btn-badge blitz-badge">Time Attack</span>
+                </button>
+                <button class="mode-card-btn" onclick="selectGameVariant('sandbox')">
+                    <span class="mode-btn-title">Infinite Mode</span>
+                    <span class="mode-btn-desc">No clock restrictions. Test your batting reflexes, trigger automated home runs, and track your metrics in an endless session.</span>
+                    <span class="mode-btn-badge sandbox-badge">Free Play</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <div class="viewport-container">
         <div class="stadium-lights"><div class="light-bank"></div><div class="light-bank"></div></div>
@@ -262,26 +291,28 @@
             <div id="plate-second" class="base-plate-3d square-bag"></div>
             <div id="plate-third" class="base-plate-3d square-bag"></div>
 
+            <!-- SCOREBOARD MATRIX -->
             <div class="jumbotron-scoreboard">
-                <div class="jumbotron-header"><span>Ballpark Video Matrix</span><span style="color:var(--gold)">● LIVE</span></div>
+                <div class="jumbotron-header"><span>Stadium Matrix Cluster</span><span id="scoreboard-mode-lbl" style="color:var(--gold)">● BLITZ MODE</span></div>
                 <table class="matrix-table">
                     <tr>
                         <th style="text-align:left;">TEAM</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
-                        <th class="highlight-col">R</th><th class="highlight-col">H</th><th class="highlight-col">E</th>
+                        <th class="highlight-col">R</th><th class="highlight-col">H</th><th class="highlight-col">O</th>
                     </tr>
                     <tr>
-                        <td class="team-row" style="color:var(--blue-team)">AWAY (YOU)</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td id="board-away-current">0</td>
-                        <td class="highlight-col" id="board-away-r" style="color:var(--gold)">1</td>
-                        <td class="highlight-col" id="board-away-h">3</td>
-                        <td class="highlight-col" id="board-away-e">0</td>
+                        <td class="team-row" style="color:var(--blue-team)">AWAY (YOU)</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td id="board-away-current">0</td>
+                        <td class="highlight-col" id="board-away-r" style="color:var(--gold)">0</td>
+                        <td class="highlight-col" id="board-away-h">0</td>
+                        <td class="highlight-col" id="board-away-o" style="color:var(--neon-red)">0</td>
                     </tr>
                     <tr>
-                        <td class="team-row" style="color:var(--neon-red)">HOME</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>-</td>
-                        <td class="highlight-col" style="color:var(--gold)">1</td><td class="highlight-col">4</td><td class="highlight-col">1</td>
+                        <td class="team-row" style="color:var(--neon-red)">HOME</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>-</td>
+                        <td class="highlight-col" style="color:var(--gold)">0</td><td class="highlight-col">0</td><td class="highlight-col">0</td>
                     </tr>
                 </table>
             </div>
 
+            <!-- DEFENSIVE AVATARS -->
             <div id="npc-pitcher" class="npc-container-3d red-team-npc"><div class="human-mesh-root"><div class="red-team-badge npc-badge">1. Pitcher</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
             <div id="npc-catcher" class="npc-container-3d red-team-npc"><div class="human-mesh-root"><div class="red-team-badge npc-badge">2. Catcher</div><div class="human-head-node"></div><div class="human-torso-node" style="background:#444;"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
             <div id="npc-first-base" class="npc-container-3d red-team-npc"><div class="human-mesh-root"><div class="red-team-badge npc-badge">3. First Base</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
@@ -292,6 +323,7 @@
             <div id="npc-center-field" class="npc-container-3d red-team-npc"><div class="human-mesh-root"><div class="red-team-badge npc-badge">8. Center Field</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
             <div id="npc-right-field" class="npc-container-3d red-team-npc"><div class="human-mesh-root"><div class="red-team-badge npc-badge">9. Right Field</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
 
+            <!-- RUNNERS -->
             <div id="runner-b1" class="npc-container-3d blue-team-npc runner-pool-element"><div class="human-mesh-root"><div class="blue-team-badge npc-badge">Runner</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
             <div id="runner-b2" class="npc-container-3d blue-team-npc runner-pool-element"><div class="human-mesh-root"><div class="blue-team-badge npc-badge">Runner</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
             <div id="runner-b3" class="npc-container-3d blue-team-npc runner-pool-element"><div class="human-mesh-root"><div class="blue-team-badge npc-badge">Runner</div><div class="human-head-node"></div><div class="human-torso-node"></div><div class="human-arm left"></div><div class="human-arm right"></div><div class="human-leg left"></div><div class="human-leg right"></div></div></div>
@@ -306,76 +338,182 @@
             <div class="held-bat right-bat"><div class="human-hand" style="left:auto; right:-28px;"></div></div>
         </div>
 
+        <!-- LOWER HUD BROADCAST CONSOLE -->
         <div class="broadcast-hud">
             <div class="navigation-hint-card">
-                <div class="nav-row"><span class="key-cap">E</span> <b>Call Pitch from Pitcher</b></div>
-                <div class="nav-row"><span class="key-cap">W</span> Walk Forward</div>
-                <div class="nav-row"><span class="key-cap">S</span> Walk Backward</div>
-                <div class="nav-row"><span class="key-cap">A</span> Strafe Left</div>
-                <div class="nav-row"><span class="key-cap">D</span> Strafe Right</div>
-                <div class="nav-row" style="margin-top:6px; color:#8b949e;"><span class="key-cap" style="color:#fff;">CLICK</span> Swing Bat</div>
+                <div class="nav-row"><span class="key-cap">E</span> <b>Call Pitch</b></div>
+                <div class="nav-row"><span class="key-cap">W</span> Move Camera Up</div>
+                <div class="nav-row"><span class="key-cap">S</span> Move Camera Down</div>
             </div>
 
             <div class="lower-third-ticker">
-                <div class="ticker-cluster"><span class="ticker-lbl">Strikes (Max 3)</span><div class="count-dots-container" id="strike-dots"><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div></div></div>
-                <div class="ticker-cluster"><span class="ticker-lbl">Balls (Max 4)</span><div class="count-dots-container" id="ball-dots"><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div></div></div>
-                <div id="commentary-feed" class="commentary-output">[BROADCAST]: Systems synced. Full Foul Ball rules, Fielder catching errors, and dynamic runner-forcing simulation live! Press [E] to begin.</div>
+                <div class="ticker-cluster">
+                    <span class="ticker-lbl">Time Limit</span>
+                    <div id="hud-timer-display" class="ticker-val-big" style="color:var(--gold);">02:00</div>
+                </div>
+
+                <div class="ticker-cluster">
+                    <span class="ticker-lbl">Score</span>
+                    <div id="hud-score-display" class="ticker-val-big">0.00</div>
+                </div>
+
+                <div class="ticker-cluster">
+                    <span id="hud-high-label" class="ticker-lbl">Mode Record</span>
+                    <div id="hud-high-display" class="ticker-val-big" style="color:var(--gold);">0.00</div>
+                </div>
+
+                <div class="ticker-cluster"><span class="ticker-lbl">Strikes</span><div class="count-dots-container" id="strike-dots"><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div></div></div>
+                <div class="ticker-cluster"><span class="ticker-lbl">Balls</span><div class="count-dots-container" id="ball-dots"><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div><div class="count-dot"></div></div></div>
+                
+                <div id="commentary-feed" class="commentary-output">Select a variant engine in the hub layout map to deploy simulation.</div>
+                
+                <button class="exit-hub-btn" onclick="backToHubLayout()">Menu</button>
             </div>
+        </div>
+    </div>
+
+    <!-- TERMINAL OUTCOME SCREENS -->
+    <div id="end-game-screen" class="terminal-modal-screen">
+        <div class="modal-content-box">
+            <div id="end-title" class="modal-title">ROUND ENDED</div>
+            <div id="end-desc" class="modal-desc">Match cycle sequence processed completely.</div>
+            <button class="action-reset-btn" onclick="backToHubLayout()">Return to Hub</button>
         </div>
     </div>
 
     <script>
         let gameState = {
-            runs: 0, hits: 0, errors: 0,
+            selectedMode: "blitz", 
+            score: 0.0, hits: 0, outs: 0,
             strikes: 0, balls: 0,
             pitchActive: false, swingActive: false, ballHitRoute: false,
             currentPitchType: "strike",
-            baseOccupants: { first: false, second: false, third: false }, // Dynamic layout tracking state
-            posX: 0, posZ: 0, maxBounds: 45
+            baseOccupants: { first: false, second: false, third: false },
+            posX: 0, posZ: 0, maxBounds: 45,
+            timeLeftSeconds: 120,
+            gameActive: false,
+            clockTimerId: null,
+            // Dual High Scores
+            highScoreBlitz: 0.0,
+            highScoreSandbox: 0.0
         };
 
         const baseCoordinates = {
-            home:   { top: 82, left: 50 },
             first:  { top: 54, left: 69 },
             second: { top: 43.5, left: 50 },
             third:  { top: 54, left: 31 }
         };
 
+        // LOAD DATASTORE RECORDS FOR BOTH MODES
+        function loadAllDataStoreRecords() {
+            const savedBlitz = localStorage.getItem("roblox_baseball_high_blitz");
+            gameState.highScoreBlitz = savedBlitz !== null ? parseFloat(savedBlitz) : 0.0;
+
+            const savedSandbox = localStorage.getItem("roblox_baseball_high_sandbox");
+            gameState.highScoreSandbox = savedSandbox !== null ? parseFloat(savedSandbox) : 0.0;
+
+            // Update Menu UI Elements
+            document.getElementById('menu-blitz-high-val').innerText = gameState.highScoreBlitz.toFixed(2);
+            document.getElementById('menu-sandbox-high-val').innerText = gameState.highScoreSandbox.toFixed(2);
+            
+            // Sync current HUD tracking display loop targets
+            updateHUDRecordLabelAndValue();
+        }
+
+        function updateHUDRecordLabelAndValue() {
+            if (gameState.selectedMode === "blitz") {
+                document.getElementById('hud-high-label').innerText = "Blitz Best";
+                document.getElementById('hud-high-display').innerText = gameState.highScoreBlitz.toFixed(2);
+            } else {
+                document.getElementById('hud-high-label').innerText = "Infinite Best";
+                document.getElementById('hud-high-display').innerText = gameState.highScoreSandbox.toFixed(2);
+            }
+        }
+
+        function checkAndSetNewHighRecord() {
+            if (gameState.selectedMode === "blitz") {
+                if (gameState.score > gameState.highScoreBlitz) {
+                    gameState.highScoreBlitz = gameState.score;
+                    localStorage.setItem("roblox_baseball_high_blitz", gameState.highScoreBlitz.toString());
+                }
+            } else {
+                if (gameState.score > gameState.highScoreSandbox) {
+                    gameState.highScoreSandbox = gameState.score;
+                    localStorage.setItem("roblox_baseball_high_sandbox", gameState.highScoreSandbox.toString());
+                }
+            }
+            updateHUDRecordLabelAndValue();
+        }
+
+        function wipeDataStoreKey(mode, event) {
+            event.stopPropagation(); // Stop menu event bubbling issues
+            if (confirm(`Are you sure you want to clear your high record data for ${mode === 'blitz' ? 'Blitz Mode' : 'Infinite Mode'}?`)) {
+                if (mode === 'blitz') {
+                    localStorage.removeItem("roblox_baseball_high_blitz");
+                } else {
+                    localStorage.removeItem("roblox_baseball_high_sandbox");
+                }
+                loadAllDataStoreRecords();
+            }
+        }
+
+        function selectGameVariant(mode) {
+            gameState.selectedMode = mode;
+            document.getElementById('game-mode-hub').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('game-mode-hub').style.display = 'none';
+                initializeNewSession();
+            }, 300);
+        }
+
+        function backToHubLayout() {
+            gameState.gameActive = false;
+            clearInterval(gameState.clockTimerId);
+            loadAllDataStoreRecords(); // Refresh menu tables
+            document.getElementById('end-game-screen').style.display = 'none';
+            document.getElementById('game-mode-hub').style.display = 'flex';
+            setTimeout(() => { document.getElementById('game-mode-hub').style.opacity = '1'; }, 10);
+        }
+
         function sendCommentary(text) {
             const el = document.getElementById('commentary-feed');
-            if (text.includes("STRIKE") || text.includes("FOUL")) el.style.color = "var(--neon-red)";
+            if (text.includes("STRIKE") || text.includes("FOUL") || text.includes("OUT")) el.style.color = "var(--neon-red)";
             else if (text.includes("BALL") || text.includes("WALK")) el.style.color = "var(--blue-team)";
-            else if (text.includes("SAFE") || text.includes("CRACK") || text.includes("ERROR")) el.style.color = "var(--gold)";
+            else if (text.includes("HOMERUN") || text.includes("SAFE") || text.includes("CRACK")) el.style.color = "var(--gold)";
             else el.style.color = "var(--neon-green)";
             el.innerText = `[BROADCAST]: ${text}`;
         }
 
         function refreshHUD() {
-            document.getElementById('board-away-r').innerText = gameState.runs;
+            document.getElementById('board-away-r').innerText = Math.floor(gameState.score);
             document.getElementById('board-away-h').innerText = gameState.hits;
-            document.getElementById('board-away-e').innerText = gameState.errors;
-            document.getElementById('board-away-current').innerText = gameState.runs;
+            document.getElementById('board-away-o').innerText = gameState.outs;
+            document.getElementById('board-away-current').innerText = Math.floor(gameState.score);
+            
+            document.getElementById('hud-score-display').innerText = gameState.score.toFixed(2);
+            
+            checkAndSetNewHighRecord();
 
-            // Render Strikes
+            // Strikes
             const strikeDots = document.getElementById('strike-dots').children;
             for(let i=0; i<3; i++) {
                 if(i < gameState.strikes) strikeDots[i].classList.add('strike-active');
                 else strikeDots[i].classList.remove('strike-active');
             }
 
-            // Render Balls
+            // Balls
             const ballDots = document.getElementById('ball-dots').children;
             for(let i=0; i<4; i++) {
                 if(i < gameState.balls) ballDots[i].classList.add('ball-active');
                 else ballDots[i].classList.remove('ball-active');
             }
 
-            // Sync visual highlighting onto the physical diamond plates
             document.getElementById('plate-first').classList.toggle('bag-occupied', gameState.baseOccupants.first);
             document.getElementById('plate-second').classList.toggle('bag-occupied', gameState.baseOccupants.second);
             document.getElementById('plate-third').classList.toggle('bag-occupied', gameState.baseOccupants.third);
 
             syncRunnerGraphicsPositions();
+            evaluateTargetWinMatrix();
         }
 
         function syncRunnerGraphicsPositions() {
@@ -392,18 +530,103 @@
             gameState.strikes = 0;
             gameState.balls = 0;
             setTimeout(() => {
-                sendCommentary(announcement + " Next batter up.");
+                if (!gameState.gameActive) return;
+                sendCommentary(announcement + " Next hitter ready at home plate.");
                 refreshHUD();
-            }, 1800);
+            }, 1500);
         }
 
-        // ==========================================================================
-        // KEYBOARD MECHANICS POLLING
-        // ==========================================================================
+        function startBlitzClock() {
+            if(gameState.clockTimerId) clearInterval(gameState.clockTimerId);
+            
+            if (gameState.selectedMode === "sandbox") {
+                document.getElementById('hud-timer-display').innerText = "∞";
+                document.getElementById('hud-timer-display').style.color = "var(--neon-green)";
+                return;
+            }
+
+            document.getElementById('hud-timer-display').style.color = "var(--gold)";
+            gameState.clockTimerId = setInterval(() => {
+                if (!gameState.gameActive) return;
+                gameState.timeLeftSeconds--;
+
+                let mins = Math.floor(gameState.timeLeftSeconds / 60);
+                let secs = gameState.timeLeftSeconds % 60;
+                document.getElementById('hud-timer-display').innerText = 
+                    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+                if (gameState.timeLeftSeconds <= 0) {
+                    processMatchTermination(false);
+                }
+            }, 1000);
+        }
+
+        function penalizeScoreForOut() {
+            gameState.outs++;
+            if (gameState.selectedMode === "blitz") {
+                gameState.score = Math.max(0.0, gameState.score - 0.25);
+                sendCommentary("OUT! Penalty: -0.25 points deducted from scorecard.");
+            } else {
+                sendCommentary("OUT! Flyball caught out in the field matrix.");
+            }
+        }
+
+        function evaluateTargetWinMatrix() {
+            if (gameState.selectedMode === "blitz" && gameState.score >= 5.0 && gameState.gameActive) {
+                processMatchTermination(true);
+            }
+        }
+
+        function processMatchTermination(isVictory) {
+            gameState.gameActive = false;
+            clearInterval(gameState.clockTimerId);
+            checkAndSetNewHighRecord();
+            
+            const overlay = document.getElementById('end-game-screen');
+            const title = document.getElementById('end-title');
+            const desc = document.getElementById('end-desc');
+
+            overlay.style.display = 'flex';
+            if (isVictory) {
+                title.innerText = "VICTORY!";
+                title.style.color = "var(--neon-green)";
+                desc.innerText = `You scored 5 points with ${gameState.timeLeftSeconds}s remaining! Score: ${gameState.score.toFixed(2)}`;
+            } else {
+                title.innerText = "GAME OVER";
+                title.style.color = "var(--neon-red)";
+                desc.innerText = `Time expired before hitting the 5-point milestone. Final Score: ${gameState.score.toFixed(2)}`;
+            }
+        }
+
+        function initializeNewSession() {
+            gameState.score = 0.0; gameState.hits = 0; gameState.outs = 0;
+            gameState.strikes = 0; gameState.balls = 0;
+            gameState.pitchActive = false; gameState.ballHitRoute = false;
+            gameState.baseOccupants = { first: false, second: false, third: false };
+            gameState.timeLeftSeconds = 120;
+            gameState.gameActive = true;
+            
+            loadAllDataStoreRecords();
+
+            document.getElementById('end-game-screen').style.display = 'none';
+            document.getElementById('scoreboard-mode-lbl').innerText = 
+                gameState.selectedMode === "blitz" ? "● BLITZ MODE (NEED 5)" : "● INFINITE TRAINING";
+
+            if (gameState.selectedMode === "blitz") {
+                sendCommentary("Blitz Active! Score 5 points in 2 mins. Watch the -0.25 out penalties!");
+            } else {
+                sendCommentary("Infinite Mode active! Relax, swing, and track metrics without limits.");
+            }
+
+            refreshHUD();
+            startBlitzClock();
+        }
+
+        // CONTROL LOOPS
         const pressedKeys = {};
         window.addEventListener('keydown', (e) => { 
             const key = e.key.toLowerCase(); pressedKeys[key] = true; 
-            if (key === 'e') executePitchDelivery();
+            if (key === 'e' && gameState.gameActive) executePitchDelivery();
         });
         window.addEventListener('keyup', (e) => { pressedKeys[e.key.toLowerCase()] = false; });
 
@@ -411,25 +634,20 @@
             let moved = false; const speed = 1.2;
             if (pressedKeys['w']) { gameState.posZ = Math.min(gameState.maxBounds, gameState.posZ + speed); moved = true; }
             if (pressedKeys['s']) { gameState.posZ = Math.max(-gameState.maxBounds, gameState.posZ - speed); moved = true; }
-            if (pressedKeys['a']) { gameState.posX = Math.min(gameState.maxBounds, gameState.posX + speed); moved = true; }
-            if (pressedKeys['d']) { gameState.posX = Math.max(-gameState.maxBounds, gameState.posX - speed); moved = true; }
             if (moved) {
                 const world = document.getElementById('stadium-world');
                 let depthScale = 1 + (gameState.posZ * 0.007);
-                world.style.transform = `scale(${depthScale}) translate3d(${gameState.posX * 4}px, ${gameState.posZ * 5}px, 0px)`;
+                world.style.transform = `scale(${depthScale}) translate3d(0px, ${gameState.posZ * 5}px, 0px)`;
             }
             requestAnimationFrame(processMovementLoop);
         }
 
-        // ==========================================================================
-        // PITCH ENGINE
-        // ==========================================================================
         function executePitchDelivery() {
-            if (gameState.pitchActive || gameState.ballHitRoute) return;
+            if (gameState.pitchActive || gameState.ballHitRoute || !gameState.gameActive) return;
             gameState.pitchActive = true;
 
             gameState.currentPitchType = Math.random() > 0.45 ? "strike" : "ball";
-            sendCommentary("Pitcher winds up... fires a bullet over the plate!");
+            sendCommentary("Pitcher winds up... pitch is incoming!");
 
             const ball = document.getElementById('ball-element');
             ball.style.display = 'block'; ball.style.transition = 'none';
@@ -448,9 +666,9 @@
                 if (gameState.pitchActive) {
                     gameState.pitchActive = false; ball.style.display = 'none';
                     if (gameState.currentPitchType === "strike") {
-                        gameState.strikes++; sendCommentary("STRIKE! Blazing fastball right down Main Street.");
+                        gameState.strikes++; sendCommentary("STRIKE! Caught you looking.");
                     } else {
-                        gameState.balls++; sendCommentary("BALL! Outside the hitting box zone.");
+                        gameState.balls++; sendCommentary("BALL! Outside the zone.");
                     }
                     checkUmpireRules(); refreshHUD();
                 }
@@ -458,7 +676,7 @@
         }
 
         function fireBatSwingSequence() {
-            if (gameState.swingActive) return;
+            if (gameState.swingActive || !gameState.gameActive) return;
             gameState.swingActive = true;
             document.getElementById('arms-rig').classList.add('swing-active');
 
@@ -469,115 +687,117 @@
                 const ballScaleX = parseFloat(values[0]) || 0.01;
 
                 if (ballScaleX >= 4.5 && ballScaleX <= 7.8) {
-                    // Contact made! Determine Fair vs Foul spray-hit matrix path rules
                     gameState.pitchActive = false;
                     processHitTrajectoryLogic();
                 } else {
                     gameState.pitchActive = false; ball.style.display = 'none';
-                    gameState.strikes++; sendCommentary("STRIKE! Mighty swing, but completely missed the timing.");
+                    gameState.strikes++; sendCommentary("STRIKE! Bad timing on the swing.");
                     checkUmpireRules(); refreshHUD();
                 }
             }
             setTimeout(() => { document.getElementById('arms-rig').classList.remove('swing-active'); gameState.swingActive = false; }, 160);
         }
 
-        // ==========================================================================
-        // ADVANCED HIT PHYSICS, FOUL RULES, & CATCH ERROR SIMULATION
-        // ==========================================================================
         function processHitTrajectoryLogic() {
             gameState.ballHitRoute = true;
             const ball = document.getElementById('ball-element');
 
-            // Generate fully randomized field coordinate destinations
-            const randomTargetTop = 32 + Math.random() * 25;   // Outfield vs Infield spread depth
-            const randomTargetLeft = 15 + Math.random() * 70;  // Complete Left-to-Right spray field distribution
-
-            // Officiating Rules: Check if the spray falls within the foul territory lines
+            const randomTargetTop = 30 + Math.random() * 25;
+            const randomTargetLeft = 15 + Math.random() * 70;
             const isFairBall = (randomTargetLeft >= 30 && randomTargetLeft <= 70);
+            const isHomeRun = isFairBall && (Math.random() < 0.15);
 
-            sendCommentary("CRACK! Splendid contact sound echoing off the barrel!");
-
-            ball.style.transition = 'all 1.8s cubic-bezier(0.15, 0.6, 0.2, 1)';
-            ball.style.top = randomTargetTop + '%';
-            ball.style.left = randomTargetLeft + '%';
-            ball.style.transform = 'translate(-50%, -50%) scale(0.4)';
+            if (isHomeRun) {
+                sendCommentary("💥 ABSOLUTE CRUSH! WALL SCRAPER HOME RUN!");
+                ball.style.transition = 'all 2.0s cubic-bezier(0.08, 0.5, 0.1, 1)';
+                ball.style.top = '15%'; ball.style.left = '50%';
+                ball.style.transform = 'translate(-50%, -50%) scale(0.1)';
+            } else {
+                sendCommentary("CRACK! Line drive hit into deep center field!");
+                ball.style.transition = 'all 1.6s cubic-bezier(0.15, 0.6, 0.2, 1)';
+                ball.style.top = randomTargetTop + '%';
+                ball.style.left = randomTargetLeft + '%';
+                ball.style.transform = 'translate(-50%, -50%) scale(0.4)';
+            }
 
             setTimeout(() => {
                 ball.style.display = 'none';
                 gameState.ballHitRoute = false;
 
                 if (!isFairBall) {
-                    // Standard Baseball Foul Ball Rule: Counts as a strike unless there are already 2 strikes
                     if (gameState.strikes < 2) gameState.strikes++;
-                    sendCommentary("FOUL BALL! Deep drive curving wide outside the baseline. (Strike added/held at max 2).");
-                    checkUmpireRules();
-                    refreshHUD();
+                    sendCommentary("FOUL BALL! Deep but out of bounds.");
+                    checkUmpireRules(); refreshHUD();
+                } else if (isHomeRun) {
+                    processHomeRunLogic();
                 } else {
-                    // Fair ball context. Now evaluate defensive catch vs tracking error matrix
-                    const isDefensiveError = Math.random() > 0.78; // 22% chance of a fielding bobble/miss error
-
+                    const isDefensiveError = Math.random() > 0.70;
                     if (isDefensiveError) {
-                        gameState.errors++;
                         gameState.hits++;
-                        sendCommentary("BOBBLED ERROR! The fielder drops the catch! Runners advancing safely!");
-                        advanceBaseRunnersLogic(false); // Base Hit
+                        sendCommentary("SAFE! The infielder bobbled the ground ball!");
+                        advanceBaseRunnersLogic(false);
                     } else {
-                        // Successful Clean Outfield Catch
-                        sendCommentary("OUT! Spectacular tracking recovery! Caught cleanly out of the air.");
-                        resetAtBat("Batter retired from air defense flyout.");
+                        penalizeScoreForOut();
+                        resetAtBat("Flyout caught cleanly.");
                     }
                 }
             }, 1800);
         }
 
-        // ==========================================================================
-        // LIVE RATIONAL FORCED RUNNER BASE-RUNNING ENGINE
-        // ==========================================================================
+        function processHomeRunLogic() {
+            gameState.hits++;
+            let runsScoredThisPlay = 1;
+
+            if (gameState.baseOccupants.first) runsScoredThisPlay++;
+            if (gameState.baseOccupants.second) runsScoredThisPlay++;
+            if (gameState.baseOccupants.third) runsScoredThisPlay++;
+
+            gameState.baseOccupants = { first: false, second: false, third: false };
+            gameState.score += runsScoredThisPlay;
+
+            sendCommentary(`✨ OVER THE WALL! HOME RUN! +${runsScoredThisPlay} Score!`);
+            resetAtBat("Bases cleared.");
+        }
+
         function advanceBaseRunnersLogic(isWalk) {
             let runsScoredThisPlay = 0;
 
             if (isWalk) {
-                // Base on Balls: Force runners to advance ONLY if pushed by another trailing runner
                 if (gameState.baseOccupants.first) {
                     if (gameState.baseOccupants.second) {
-                        if (gameState.baseOccupants.third) {
-                            runsScoredThisPlay++;
-                        }
+                        if (gameState.baseOccupants.third) { runsScoredThisPlay++; }
                         gameState.baseOccupants.third = true;
                     }
                     gameState.baseOccupants.second = true;
                 }
                 gameState.baseOccupants.first = true;
             } else {
-                // Base Hit/Error: All active runners move up with urgency
                 if (gameState.baseOccupants.third) { runsScoredThisPlay++; gameState.baseOccupants.third = false; }
                 if (gameState.baseOccupants.second) { gameState.baseOccupants.third = true; gameState.baseOccupants.second = false; }
                 if (gameState.baseOccupants.first) { gameState.baseOccupants.second = true; }
-                gameState.baseOccupants.first = true; // Batter claims first base plate securely
+                gameState.baseOccupants.first = true;
             }
 
             if (runsScoredThisPlay > 0) {
-                gameState.runs += runsScoredThisPlay;
-                setTimeout(() => { sendCommentary(`🏃 SAFE AT HOME! Runner crosses the plate. +${runsScoredThisPlay} RUN added to the scoreboard!`); refreshHUD(); }, 200);
+                gameState.score += runsScoredThisPlay;
+                setTimeout(() => { sendCommentary(`RUNNER TOUCHED HOME PLATE! +${runsScoredThisPlay} Run scored.`); refreshHUD(); }, 200);
             }
 
-            resetAtBat(isWalk ? "Walk processed safely." : "Hit recorded cleanly in fair territory.");
+            resetAtBat(isWalk ? "Base on balls." : "Single to shallow field.");
         }
 
-        // ==========================================================================
-        // CORE SETTLED RULE DICTATORS
-        // ==========================================================================
         function checkUmpireRules() {
             if (gameState.strikes >= 3) {
-                resetAtBat("STRIKEOUT! 3 strikes recorded. Batter is out!");
+                penalizeScoreForOut();
+                resetAtBat("STRIKEOUT! Batter goes down swinging.");
             } else if (gameState.balls >= 4) {
-                sendCommentary("WALK! 4 balls drawn. Batter is awarded 1st base.");
+                sendCommentary("WALK! Free pass awarded.");
                 advanceBaseRunnersLogic(true);
             }
         }
 
         window.onload = () => {
-            refreshHUD();
+            loadAllDataStoreRecords();
             requestAnimationFrame(processMovementLoop);
         };
     </script>
